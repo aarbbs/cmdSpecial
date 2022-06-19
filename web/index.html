@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="./css/index.css">
+  </head>
+  <style>
+    @font-face {
+      font-family: 'MONACO';
+      src: url("./font/MONACO.TTF") format('truetype');
+      font-weight: bold;
+      opacity: 1;
+    }
+
+    textarea {
+      color: #2016131 !important;
+      font-family: MONACO !important;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    body {
+      border-top: 1px solid #FFF2F2F2;
+    }
+
+    /*---滚动条默认显示样式--*/
+    .custom-scroll-bar::-webkit-scrollbar-thumb {
+      background-color: #018EE8;
+      height: 50px;
+      outline-offset: -2px;
+      outline: 2px solid #fff;
+      -webkit-border-radius: 4px;
+      border: 2px solid #fff;
+    }
+
+    /*---鼠标点击滚动条显示样式--*/
+    .custom-scroll-bar::-webkit-scrollbar-thumb:hover {
+      background-color: #FB4446;
+      height: 50px;
+      -webkit-border-radius: 4px;
+    }
+
+    /*---滚动条大小--*/
+    .custom-scroll-bar::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    /*---滚动框背景样式--*/
+    .custom-scroll-bar::-webkit-scrollbar-track-piece {
+      background-color: #fff;
+      -webkit-border-radius: 0;
+    }
+
+    .custom-scroll-bar::-webkit-scrollbar-thumb:active {
+      height: 50px;
+      background-color: #000;
+      -webkit-border-radius: 4px;
+    }
+
+    .wrap {
+      /* border: 1px solid #006DB7; */
+      overflow: hidden;
+    }
+
+    .wrap:hover {
+      overflow-y: auto;
+    }
+
+    .yu-alert {
+      margin: 0;
+      width: auto;
+    }
+
+    .yu-header {
+      background-color: antiquewhite;
+    }
+
+    .yu-sidebar {
+      background-color: #FFFFFFFF;
+    }
+
+    .yu-content {
+      background-color: #FFFFFFFF;
+      border-left: 1px solid #FFF2F2F2;
+    }
+
+    .web-container {}
+
+    #build_log_editor {
+      width: -webkit-calc(100% - 5px);
+      height: 100%;
+    }
+  </style>
+  <body>
+    <div class="yu-layout">
+      <div class="yu-layout-inline">
+        <div class="yu-sidebar custom-scroll-bar wrap" οnmοuseοver="console.log('Hello')">
+          <div class="yu-alert info" style="width:200px"><i class="iconfont icon-tag"></i>项目名</div>
+          <div class="web-container">
+            <div id="menu" class="yu-menu light vertical">
+              <!--菜单、子菜单
+              <div class="sub-menu">
+                <div class="menu-title"><i class="iconfont icon-home-o"></i>我是菜单 
+                <i class="iconfont icon-angle-down"></i></div>
+                <div class="sub-menu" style="height: 0;overflow: hidden">
+                  <div class="menu-item" style="padding-left: 30px">我是子菜单一</div>
+                  <div class="menu-item" style="padding-left: 30px">我是子菜单二</div>
+                  <div class="menu-item" style="padding-left: 30px">我是子菜单三</div>
+                </div>
+              </div>
+               -->
+            </div>
+          </div>
+        </div>
+        <div class="yu-layout-block">
+          <div id="header-title" class="yu-alert primary">···</div>
+
+          <div class="yu-button-group">
+            <button class="yu-button primary plain" onclick="generateCompileCommand(this.innerHTML)">Hello</button>
+          </div>
+
+          <div class="yu-input">
+            <input id="build-input" value="ping baidu.com" type="text" class="append"
+              style="width:-webkit-calc(100% - 90px);" placeholder="编译命令">
+            <button class="yu-button append primary" style="width:90px" onclick="goBuild()">Build</button>
+          </div>
+
+          <div id="build_log_editor"></div>
+
+          <div class="yu-alert primary"><i class="iconfont icon-check-circle"></i>
+            hello<p style="float:right; margin:0;">hello</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script src="./js/index.js"></script>
+  <script src="./js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+  <!-- aardio js -->
+  <script>
+    function createMenu(){
+      (async ()=>{
+        var allPrjName = await getAllPrjName();
+        var para = document.getElementById("menu");
+        for(i in allPrjName){
+          //console.log(allPrjName[i])
+          para.innerHTML += `
+            <div class="sub-menu">
+              <div class="menu-title"><i class="iconfont icon-home-o"></i>hello
+              <i class="iconfont icon-angle-down"></i></div>
+              <div class="sub-menu" style="height: 0;overflow: hidden">
+                <div class="menu-item" style="padding-left: 30px">我是子菜单一</div>
+                <div class="menu-item" style="padding-left: 30px">我是子菜单二</div>
+                <div class="menu-item" style="padding-left: 30px">我是子菜单三</div>
+              </div>
+            </div>`;
+        }
+      })()
+    }
+  </script>
+  <!-- go build js -->
+  <script type="text/javascript">
+    var build_log_editor = ace.edit("build_log_editor");
+    build_log_editor.setTheme("ace/theme/terminal"); // 设置主题
+    build_log_editor.getSession().setMode("ace/mode/log"); // 设置程序语言模式
+    build_log_editor.setReadOnly(false); // 设置只读
+    build_log_editor.renderer.setShowGutter(false); // 设置行号
+    build_log_editor.setShowPrintMargin(false); // 设置打印边距
+    build_log_editor.setHighlightActiveLine(false); // 设置选中高亮
+    build_log_editor.setOption("wrap", "free"); // 自动换行，free:开，off:关
+
+    function insertAtTheEndOfEditor(string) {
+      var customPosition = {
+        row: build_log_editor.session.getLength(),
+        column: 0
+      };
+      build_log_editor.session.insert(customPosition, string);
+      build_log_editor.renderer.scrollToLine(Number.POSITIVE_INFINITY)
+    }
+
+    goBuild = async () => {
+      var sBuildCommandValue = document.getElementById("build-input").value;
+      if (null == sBuildCommandValue) {
+        return false;
+      }
+      //异步有异步的好处，扬长避短是智慧，倒行逆施最累人。
+      await aardio.ping(sBuildCommandValue);
+    };
+  </script>
+  <!-- html js -->
+  <script type="text/javascript">
+    var menuActivedSub = -1;
+    var menuItemActivedSub = -1;
+    var menus = document.querySelectorAll('.vertical .menu-title');
+    var menuItems = document.querySelectorAll('.sub-menu .menu-item');
+
+    createMenu();
+    
+    function generateCompileCommand(compileType) {
+      var str = document.getElementById("header-title").innerText;
+      if (str.length == 0) {
+        return;
+      }
+      if (compileType == "new") {
+        document.getElementById("build-input").value = "make p=" + str.match("project_(.*?).mk")[1] +
+          " " + compileType + " <?=ini_build_config.job + ' ' + ini_build_config.j?>";
+      } else if (/app/.test(compileType)) {
+        document.getElementById("build-input").value = "make p=" + str.match("project_(.*?).mk")[1] +
+          " m=" + compileType + " image update <?=ini_build_config.job + ' ' + ini_build_config.j?>";
+      } else if (/simulator/.test(compileType) && /resource/.test(compileType)) {
+        document.getElementById("build-input").value = "make p=" + str.match("project_(.*?).mk")[1] +
+          " m=<?=ini_build_type.simulator + ' ' + ini_build_config.job + ' ' + ini_build_config.j?>";
+        document.getElementById("build-input").value += " && make p=" + str.match("project_(.*?).mk")[1] +
+          " m=<?=ini_build_type.resource + ' ' + ini_build_config.job + ' ' + ini_build_config.j?>";
+      } else {
+        document.getElementById("build-input").value = "make p=" + str.match("project_(.*?).mk")[1] +
+          " m=" + compileType + " <?=ini_build_config.job + ' ' + ini_build_config.j?>";
+      }
+    }
+
+    function menuShow(e) {
+      var menuHeight = e.currentTarget.nextElementSibling.getElementsByClassName("menu-item").length * 40;
+      e.currentTarget.classList.toggle('active', true);
+      e.currentTarget.nextElementSibling.style.height = menuHeight + 'px';
+      e.currentTarget.getElementsByClassName("iconfont")[0].classList.toggle('icon-f-text', false);
+      e.currentTarget.getElementsByClassName("iconfont")[0].classList.toggle('icon-eye', true);
+    }
+
+    function menuHide() {
+      menus[menuActivedSub].classList.toggle('active', false);
+      menus[menuActivedSub].nextElementSibling.style.height = '0';
+      menus[menuActivedSub].getElementsByClassName("iconfont")[0].classList.toggle('icon-f-text', true);
+      menus[menuActivedSub].getElementsByClassName("iconfont")[0].classList.toggle('icon-eye', false);
+    }
+    
+    Array.from(menus).forEach((item) => {
+      item.addEventListener('click', function(e) {
+        if (-1 == menuActivedSub) {
+          //显示当前点击的菜单
+          menuShow(e);
+        } else if (-1 != menuActivedSub && e.currentTarget.classList.contains("active")) {
+          //隐藏之前显示的菜单
+          menuHide();
+        } else if (-1 != menuActivedSub) {
+          //隐藏之前显示的菜单
+          menuHide();
+          //显示当前点击的菜单
+          menuShow(e);
+        } else {
+          alert("菜单显示/隐藏逻辑错误！");
+        }
+        //记录当前为显示状态的菜单下标
+        for (var i = 0; i < menus.length; i++) {
+          if (item == menus[i]) {
+            menuActivedSub = i;
+          }
+        }
+      })
+    })
+
+    Array.from(menuItems).forEach((item) => {
+      item.addEventListener('click', function(e) {
+        //选中当前点击的菜单子项
+        e.currentTarget.classList.add('active');
+
+        //隐藏非当前点击的、上一次选中的菜单子项
+        if (-1 != menuItemActivedSub && e.currentTarget != menuItems[menuItemActivedSub]) {
+          menuItems[menuItemActivedSub].classList.remove("active");
+        }
+        document.getElementById("header-title").innerText = e.currentTarget.id;
+        //记录当前为选中状态的菜单子项下标
+        for (var i = 0; i < menuItems.length; i++) {
+          if (item == menuItems[i]) {
+            menuItemActivedSub = i;
+            return;
+          }
+        }
+      })
+    })
+    
+  </script>
+</html>

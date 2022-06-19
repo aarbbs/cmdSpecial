@@ -1,0 +1,149 @@
+import win.ui;
+/*DSG{{*/
+mainForm = win.form(text="cmdSpecial";right=1135;bottom=702)
+mainForm.add()
+/*}}*/
+
+//如果运行或发布遇到问题，请先卸载 WebView2 再运行示例以更新该组件。
+import web.view;
+var wb  = web.view(mainForm); 
+
+import fsys;
+import fsys.ini
+import console;
+configFile = io.splitpath(io._exefile).name + ".ini"
+
+if not io.exist(configFile){
+    var ini = fsys.ini(configFile);
+
+    ini_makefile = ini.getSection("Makefile");
+    ini_makefile.路径 = "./makefile";
+    ini_makefile.文件名 = "project_*.mk";
+    ini_makefile.save();
+
+    ini_build_type = ini.getSection("编译模块配置");
+    ini_build_type.new = "new";
+    ini_build_type.app = "app";
+    ini_build_type.simulator = "simulator";
+    ini_build_type.resource = "resource";
+    ini_build_type.simulator_resource = "simulator-resource";
+    ini_build_type.save();
+
+    ini_build_config = ini.getSection("编译配置");
+    ini_build_config.job = "job=8";
+    ini_build_config.j = "-j4";
+    ini_build_config.save();
+    ini_market = ini.getSection("市场");
+    ini_market.save();
+}else {
+    ini = fsys.ini(configFile)
+    ini_makefile = ini.getSection("Makefile");
+    ini_build_type = ini.getSection("编译模块配置");
+    ini_build_config = ini.getSection("编译配置");
+    ini_market = ini.getSection("市场");
+}
+
+var getAllProjectFiles = function(path, fileName){
+    var data = {};
+    fsys.enum( path, fileName,
+        function(dirname,filename,fullpath,findData){ 
+            if(filename){ 
+                table.insert(data, filename);
+            }
+        } 
+        ,false/*如果此参数为false则忽略子目录*/
+    );
+    return data;
+}
+
+var listToDict = function(p_list){
+    class DictStruct {
+        project_name;
+        makefile_name;
+    }
+
+    var all_project_files_list_dict = {};
+    for(i=1;#p_list;1){
+        var temp = DictStruct();
+        temp.project_name = string.split(p_list[i],"_")[3];
+        temp.makefile_name = p_list[i];
+        table.push(all_project_files_list_dict,temp)
+    }
+    return all_project_files_list_dict;
+}
+
+var tableUnique = function(arr,key){
+    var rAr = {};
+    var temp = {};
+    for(k,v in arr){
+        var a = v[key];
+        if(!rAr[a]){
+            rAr[a]= v;
+            table.insert(temp, a);
+        }
+    }
+    return temp;
+}
+//获取所有文件名
+var allMakefileName = getAllProjectFiles(ini_makefile.路径, ini_makefile.文件名);
+
+//设置文件名、项目名的键值对
+var allPrjFileDict = listToDict(allMakefileName);
+
+//提取唯一项目名
+var allPrjName = tableUnique(allPrjFileDict,"project_name")
+table.sort(allPrjName);
+
+var dicData = table.array();
+for(sub, prjName in allPrjName){
+	var temp = table.array();
+	for(k,prjFile in allPrjFileDict){
+		if(prjFile.project_name == prjName){
+			table.insert(temp, prjFile.makefile_name)
+		}
+	}
+	dicData[prjName] = temp;
+}
+//console.dump(dicData[allPrjName[1]])
+
+// wb.export 导出的函数被JS调用返回的值使用JSON自动转换为JS对象
+wb.export(
+	getAllPrjName = function(){
+		return allPrjName;
+	}
+	
+	getAllMakefile = function(){
+		return dicData;
+	}
+)
+
+// wb.external 导出的函数JS调用返回的表对象会转换为 Proxy 代理对象，表的成员也会转换为 Proxy 对象。
+wb.external = {
+	ping = function(domain){
+		import fsys.ini
+		if(_STUDIO_INVOKED and string.find(domain,"make")){
+			var configFile = io.splitpath(io._exefile).name + ".ini";
+			var ini = fsys.ini(configFile);
+			var makefilePath = string.replace(ini.getSection("Makefile").路径, "\\", "/");
+			if(!string.endWith(makefilePath,"/")){
+				makefilePath = makefilePath + "/";
+			}
+			domain = string.replace(domain, "make", makefilePath+"make.bat");
+			mainForm.msgbox(domain);
+			return;
+		}
+		
+		//同步有同步的优势，扬长避短是智慧，倒行逆施最累人。 
+		var prcs = process.popen(domain);
+		for( all,out,err in prcs.each() ){ 
+		    wb.invoke("insertAtTheEndOfEditor", all); 
+		}
+		wb.invoke("insertAtTheEndOfEditor", "----Build-End----"); 
+		return;
+	}
+}
+import wsock.tcp.simpleHttpServer; 
+wb.go(wsock.tcp.simpleHttpServer.startSpaUrl("\web\index.html"))
+
+mainForm.show();
+win.loopMessage();
