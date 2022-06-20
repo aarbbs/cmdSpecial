@@ -14,33 +14,29 @@ import console;
 configFile = io.splitpath(io._exefile).name + ".ini"
 
 if not io.exist(configFile){
-    var ini = fsys.ini(configFile);
+    ini = fsys.ini(configFile);
+	
+	ini.write("Makefile","路径","./makefile");
+	ini.write("Makefile","文件名","project_*.mk");
+	string.save(configFile, '\r\n', true);
 
-    ini_makefile = ini.getSection("Makefile");
-    ini_makefile.路径 = "./makefile";
-    ini_makefile.文件名 = "project_*.mk";
-    ini_makefile.save();
+	ini.write("编译模块配置","new","new");
+	ini.write("编译模块配置","app","app");
+	ini.write("编译模块配置","simulator","simulator");
+	ini.write("编译模块配置","resource","resource");
+	ini.write("编译模块配置","simulator_resource","simulator_resource");
+	string.save(configFile, '\r\n', true);
 
-    ini_build_type = ini.getSection("编译模块配置");
-    ini_build_type.new = "new";
-    ini_build_type.app = "app";
-    ini_build_type.simulator = "simulator";
-    ini_build_type.resource = "resource";
-    ini_build_type.simulator_resource = "simulator-resource";
-    ini_build_type.save();
-
-    ini_build_config = ini.getSection("编译配置");
-    ini_build_config.job = "job=8";
-    ini_build_config.j = "-j4";
-    ini_build_config.save();
-    ini_market = ini.getSection("市场");
-    ini_market.save();
+	ini.write("编译配置","job","job=8");
+	ini.write("编译配置","j","-j4");
+	ini.write("编译配置","job","job=8");
+	string.save(configFile, '\r\n', true);
+	
+	ini.write("市场名","OP","开放");
+	ini.write("市场名","IN","印度");
+	ini.write("市场名","RU","俄罗斯");
 }else {
     ini = fsys.ini(configFile)
-    ini_makefile = ini.getSection("Makefile");
-    ini_build_type = ini.getSection("编译模块配置");
-    ini_build_config = ini.getSection("编译配置");
-    ini_market = ini.getSection("市场");
 }
 
 var getAllProjectFiles = function(path, fileName){
@@ -85,7 +81,7 @@ var tableUnique = function(arr,key){
     return temp;
 }
 //获取所有文件名
-var allMakefileName = getAllProjectFiles(ini_makefile.路径, ini_makefile.文件名);
+var allMakefileName = getAllProjectFiles(ini.read("Makefile","路径"), ini.read("Makefile","文件名"));
 
 //设置文件名、项目名的键值对
 var allPrjFileDict = listToDict(allMakefileName);
@@ -93,7 +89,7 @@ var allPrjFileDict = listToDict(allMakefileName);
 //提取唯一项目名
 var allPrjName = tableUnique(allPrjFileDict,"project_name")
 table.sort(allPrjName);
-
+	
 var dicData = table.array();
 for(sub, prjName in allPrjName){
 	var temp = table.array();
@@ -104,22 +100,35 @@ for(sub, prjName in allPrjName){
 	}
 	dicData[prjName] = temp;
 }
-//console.dump(dicData[allPrjName[1]])
 
 // wb.export 导出的函数被JS调用返回的值使用JSON自动转换为JS对象
 wb.export(
 	getAllPrjName = function(){
 		return allPrjName;
 	}
+		
+	getAllMakefile = function(prjName){
+		return dicData[prjName];
+	}
+
+	//console.dump(ini.getSection("市场名").OP)
+	getMarketName = function(makefile){
+		var marketStr = string.split(makefile,"_");
+		var allMarketName = {};
+		marketStr = string.split(marketStr[#marketStr],".")[1];
+		allMarketName = ini.read("市场名",marketStr)
+		return allMarketName ? allMarketName : string.find(marketStr,"^En") ? "OP" : marketStr;; 
+	}
 	
-	getAllMakefile = function(){
-		return dicData;
+	getMakefilePath = function(makefile){
+		return io._exedir + makefile;
 	}
 )
 
 // wb.external 导出的函数JS调用返回的表对象会转换为 Proxy 代理对象，表的成员也会转换为 Proxy 对象。
-wb.external = {
+wb.external = {	
 	ping = function(domain){
+		import process.popen;
 		import fsys.ini
 		if(_STUDIO_INVOKED and string.find(domain,"make")){
 			var configFile = io.splitpath(io._exefile).name + ".ini";
