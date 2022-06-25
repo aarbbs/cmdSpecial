@@ -1,7 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<project ver="10" name="cmdSpecial" libEmbed="true" icon="..." ui="win" output="cmdSpecial.exe" CompanyName="aardio" FileDescription="cmdSpecial" LegalCopyright="Copyright (C) 作者 2022" ProductName="cmdSpecial" InternalName="cmdSpecial" FileVersion="0.0.0.10" ProductVersion="0.0.0.10" publishDir="/dist/" dstrip="false">
+<project ver="10" name="cmdSpecial" libEmbed="true" icon="app.ico" ui="win" output="cmdSpecial.exe" CompanyName="aardio" FileDescription="cmdSpecial" LegalCopyright="Copyright (C) 作者 2022" ProductName="cmdSpecial" InternalName="cmdSpecial" FileVersion="0.0.0.15" ProductVersion="0.0.0.15" publishDir="/dist/" dstrip="false">
 	<file name="main" path="main.aardio"/>
-	<folder name="窗体" path="forms" comment="" embed="true" local="false" ignored="false"/>
+	<folder name="窗体" path="forms" comment="" embed="true" local="false" ignored="false">
+		<file name="test.aardio" path="forms\test.aardio" comment="forms\test.aardio"/>
+	</folder>
 	<folder name="网页" path="web" embed="true" comment="目录" local="true" ignored="false">
 		<file name="index.html" path="web\index.html" comment="web\index.html"/>
 		<file name="index.js" path="web\index.js" comment="web\index.js"/>

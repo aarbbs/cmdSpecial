@@ -92,7 +92,7 @@
     <div class="yu-layout">
       <div class="yu-layout-inline">
         <div class="yu-sidebar custom-scroll-bar wrap">
-          <div class="yu-alert info" style="width:200px"><i class="iconfont icon-tag"></i>项目名</div>
+          <div class="yu-alert primary" style="width:200px"><i class="iconfont icon-tag"></i>项目名</div>
           <div class="web-container">
             <div id="menu" class="yu-menu light vertical">
               <!--菜单、子菜单-->
@@ -103,7 +103,11 @@
           <div id="header-title" class="yu-alert primary">···</div>
 
           <div class="yu-button-group">
-            <button class="yu-button primary plain" onclick="generateCompileCommand(this.innerHTML)">Hello</button>
+            <button id="new" class="yu-button primary plain" onclick="generateCompileCommand(this.id)">new</button>
+            <button id="app" class="yu-button primary plain" onclick="generateCompileCommand(this.id)">app</button>
+            <button id="simulator" class="yu-button primary plain" onclick="generateCompileCommand(this.id)">simulator</button>
+            <button id="resource" class="yu-button primary plain" onclick="generateCompileCommand(this.id)">resource</button>
+            <button id="sim-res" class="yu-button primary plain" onclick="generateCompileCommand(this.id)">simulator + resource</button>
           </div>
 
           <div class="yu-input">
@@ -133,6 +137,8 @@
     logOutputCtrl.setShowPrintMargin(false); // 设置打印边距
     logOutputCtrl.setHighlightActiveLine(false); // 设置选中高亮
     logOutputCtrl.setOption("wrap", "free"); // 自动换行，free:开，off:关
+    document.getElementById('log_output_ctrl').style.fontSize='14px';
+    
 
     function insertAtTheEndOfEditor(string) {
       var customPosition = {
@@ -148,18 +154,50 @@
       if (null == sBuildCommandValue) {
         return false;
       }
-      console.log("goBuild")
-      //异步有异步的好处，扬长避短是智慧，倒行逆施最累人。
-      await aardio.ping(sBuildCommandValue);
-    };
+      console.log(sBuildCommandValue)
+      await cmdSpecial(sBuildCommandValue);
+    }
   </script>
   
   <!-- 菜单初始化 -->
   <script type="text/javascript">    
     function generateCompileCommand(compileType) {
       var str = document.getElementById("header-title").innerText;
-      if (str.length == 0) {
+      if ("···" == str) {
         return;
+      }
+      
+      async function checkPlatform() {
+        return await isT117();
+      }
+      checkPlatform().then(result=>insertCommandStr(result))
+      
+      function insertCommandStr(isT117) {
+        var sCommand;
+        var project = str.match("project_(.*?).mk")[1];
+        
+        if ("new" == compileType) {
+          sCommand = "make p=" + project + " new job=8 -j4";
+        }
+        if ("app" == compileType) {
+          sCommand = "make p=" + project + " m=app image update job=8 -j4";
+        }
+        if ("simulator" == compileType) {
+          sCommand = "make p=" + project + " m=simulator job=8 -j4";
+        }
+        if ("resource" == compileType) {
+          sCommand = "make p=" + project + " m=resource job=8 -j4";
+        }
+        if ("sim-res" == compileType) {
+          sCommand = "make p=" + project + " m=simulator job=8 -j4 && ";
+          sCommand += "make p=" + project + " m=resource job=8 -j4";
+        }
+        if (isT117){
+          sCommand = sCommand.replace(/app/g,"app_main");
+          sCommand = sCommand.replace(/simulator/g,"simulator_main");
+          sCommand = sCommand.replace(/resource/g,"resource_main");
+        }
+        document.getElementById("build-input").value = sCommand;
       }
     }
     

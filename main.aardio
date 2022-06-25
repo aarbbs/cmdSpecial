@@ -8,6 +8,8 @@ mainForm.add()
 import web.view;
 var wb  = web.view(mainForm); 
 
+
+import process.popen;
 import fsys;
 import fsys.ini
 import console;
@@ -16,7 +18,12 @@ configFile = io.splitpath(io._exefile).name + ".ini"
 if not io.exist(configFile){
     ini = fsys.ini(configFile);
 	
-	ini.write("Makefile","路径","./makefile");
+	if(_STUDIO_INVOKED){
+		ini.write("Makefile","路径","./makefile");
+	}
+	else {
+		ini.write("Makefile","路径","./");
+	}
 	ini.write("Makefile","文件名","project_*.mk");
 	string.save(configFile, '\r\n', true);
 
@@ -24,7 +31,6 @@ if not io.exist(configFile){
 	ini.write("编译模块配置","app","app");
 	ini.write("编译模块配置","simulator","simulator");
 	ini.write("编译模块配置","resource","resource");
-	ini.write("编译模块配置","simulator_resource","simulator_resource");
 	string.save(configFile, '\r\n', true);
 
 	ini.write("编译配置","job","job=8");
@@ -123,34 +129,39 @@ wb.export(
 	getMakefilePath = function(makefile){
 		return io._exedir + makefile;
 	}
-)
-
-// wb.external 导出的函数JS调用返回的表对象会转换为 Proxy 代理对象，表的成员也会转换为 Proxy 对象。
-wb.external = {	
-	ping = function(domain){
-		import process.popen;
-		import fsys.ini
-		if(_STUDIO_INVOKED and string.find(domain,"make")){
-			var configFile = io.splitpath(io._exefile).name + ".ini";
-			var ini = fsys.ini(configFile);
-			var makefilePath = string.replace(ini.getSection("Makefile").路径, "\\", "/");
-			if(!string.endWith(makefilePath,"/")){
-				makefilePath = makefilePath + "/";
+	
+	cmdSpecial = function(command){
+		if(_STUDIO_INVOKED){
+			if(string.find(command,"make")){
+				var configFile = io.splitpath(io._exefile).name + ".ini";
+				var ini = fsys.ini(configFile);
+				var makefilePath = string.replace(ini.getSection("Makefile").路径, "\\", "/");
+				if(!string.endWith(makefilePath,"/")){
+					makefilePath = makefilePath + "/";
+				}
+				command = string.replace(command, "make", makefilePath+"make.bat");
+				mainForm.msgbox(command);
+				return;
 			}
-			domain = string.replace(domain, "make", makefilePath+"make.bat");
-			mainForm.msgbox(domain);
-			return;
+			mainForm.msgbox(command);
+			//return;
 		}
 		
 		//同步有同步的优势，扬长避短是智慧，倒行逆施最累人。 
-		var prcs = process.popen(domain);
+		prcs = process.popen(command);
 		for( all,out,err in prcs.each() ){ 
 		    wb.invoke("insertAtTheEndOfEditor", all); 
 		}
-		wb.invoke("insertAtTheEndOfEditor", "----Build-End----"); 
+		wb.invoke("insertAtTheEndOfEditor", "---->>>End<<<----"); 
 		return;
 	}
-}
+	
+	isT117 = function(){
+		return true
+	}
+	
+)
+
 import wsock.tcp.simpleHttpServer; 
 wb.go(wsock.tcp.simpleHttpServer.startSpaUrl("\web\index.html"))
 
